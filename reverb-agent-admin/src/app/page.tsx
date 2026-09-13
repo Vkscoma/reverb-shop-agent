@@ -3,11 +3,11 @@ import stylex from "@stylexjs/stylex";
 
 const styles = stylex.create({
   main: { margin: "0 auto", maxWidth: 900, padding: "72px 24px" },
-  title: { color: "#172033", fontSize: 42, letterSpacing: "-0.05em", margin: 0 },
-  intro: { color: "#526078", fontSize: 18, lineHeight: 1.6, margin: "16px 0 32px", maxWidth: 600 },
+  title: { color: "var(--foreground)", fontSize: 42, letterSpacing: "-0.05em", margin: 0 },
+  intro: { color: "var(--muted)", fontSize: 18, lineHeight: 1.6, margin: "16px 0 32px", maxWidth: 600 },
   nav: { display: "flex", gap: 12 },
   link: { backgroundColor: "#1456d9", borderRadius: 8, color: "#fff", fontWeight: 700, padding: "12px 16px", textDecoration: "none" },
-  secondary: { backgroundColor: "#fff", border: "1px solid #d9dfeb", color: "#172033" },
+  secondary: { backgroundColor: "var(--surface)", border: "1px solid var(--border)", color: "var(--foreground)" },
 });
 
 export default function Home(): React.JSX.Element {

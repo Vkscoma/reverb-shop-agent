@@ -2,6 +2,7 @@
 
 import type { Escalation, ListingRule } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { fetchReverbListings, type ReverbListing } from "@/lib/reverb";
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
 export type CreateListingRuleInput = { listingId: string; name: string; floorPrice: number; targetPrice: number };
@@ -12,6 +13,11 @@ export type UpdateEscalationInput = { id: string; status: string };
 const escalationStatuses = ["open", "acknowledged", "resolved"] as const;
 
 const nonEmpty = (value: string): boolean => value.trim().length > 0;
+
+export async function getReverbListings(): Promise<ActionResult<ReverbListing[]>> {
+  try { return { ok: true, data: await fetchReverbListings() }; }
+  catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Unable to load Reverb listings." }; }
+}
 
 export async function getListingRules(): Promise<ActionResult<ListingRule[]>> {
   try { return { ok: true, data: await prisma.listingRule.findMany({ orderBy: { createdAt: "desc" } }) }; }

@@ -3,6 +3,23 @@
 :root {
   --background: #f6f7f9;
   --foreground: #172033;
+  --surface: #ffffff;
+  --border: #e3e8f0;
+  --line: #edf0f5;
+  --muted: #526078;
+  --input: #ffffff;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --background: #101522;
+  --foreground: #f1f5fb;
+  --surface: #182131;
+  --border: #2b3950;
+  --line: #2a3548;
+  --muted: #aab7cb;
+  --input: #111a29;
+  color-scheme: dark;
 }
 
 body {

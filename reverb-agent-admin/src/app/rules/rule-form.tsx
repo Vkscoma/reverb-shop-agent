@@ -8,10 +8,10 @@ import { createListingRule } from "@/lib/actions";
 const styles = stylex.create({
   form: { display: "grid", gap: 16, gridTemplateColumns: "repeat(4, minmax(0, 1fr))" },
   field: { display: "grid", gap: 6 },
-  label: { color: "#526078", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" },
-  input: { border: "1px solid #d9dfeb", borderRadius: 8, color: "#172033", padding: "10px 12px", width: "100%" },
+  label: { color: "var(--muted)", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" },
+  input: { backgroundColor: "var(--input)", border: "1px solid var(--border)", borderRadius: 6, boxShadow: "none", color: "var(--foreground)", outline: "none", padding: "10px 12px", width: "100%", ":focus": { borderColor: "#5d8de8", boxShadow: "none" } },
   button: { alignSelf: "end", backgroundColor: "#1456d9", border: 0, borderRadius: 8, color: "#fff", cursor: "pointer", fontWeight: 700, padding: "11px 16px" },
-  message: { color: "#b42318", fontSize: 13, gridColumn: "1 / -1", margin: 0 },
+  message: { color: "#e26d6d", fontSize: 13, gridColumn: "1 / -1", margin: 0 },
 });
 
 export function RuleForm(): React.JSX.Element {

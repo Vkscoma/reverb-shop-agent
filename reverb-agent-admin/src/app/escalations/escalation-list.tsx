@@ -6,9 +6,10 @@ import type { Escalation } from "@prisma/client";
 import { updateEscalation } from "@/lib/actions";
 
 const styles = stylex.create({
-  cell: { borderBottom: "1px solid #edf0f5", padding: "14px 10px", textAlign: "left", verticalAlign: "top" },
-  status: { color: "#b54708", fontWeight: 700 },
-  select: { border: "1px solid #d9dfeb", borderRadius: 6, color: "#172033", padding: "6px 8px" },
+  table: { borderCollapse: "collapse", width: "100%" },
+  cell: { borderBottom: "1px solid var(--line)", color: "var(--foreground)", padding: "14px 10px", textAlign: "left", verticalAlign: "top" },
+  status: { color: "#e2a45b", fontWeight: 700 },
+  select: { backgroundColor: "var(--input)", border: "1px solid var(--border)", borderRadius: 6, boxShadow: "none", color: "var(--foreground)", outline: "none", padding: "6px 8px", ":focus": { borderColor: "#e2a45b", boxShadow: "none" } },
 });
 
 export function EscalationList({ items }: { items: Escalation[] }): React.JSX.Element {
@@ -17,5 +18,5 @@ export function EscalationList({ items }: { items: Escalation[] }): React.JSX.El
     await updateEscalation({ id, status });
     router.refresh();
   }
-  return <table style={{ borderCollapse: "collapse", width: "100%" }}><thead><tr>{["Intent", "Conversation", "Message", "Status"].map((heading) => <th key={heading} {...stylex.props(styles.cell)}>{heading}</th>)}</tr></thead><tbody>{items.map((item) => <tr key={item.id}><td {...stylex.props(styles.cell)}>{item.intent}</td><td {...stylex.props(styles.cell)}>{item.conversationId}</td><td {...stylex.props(styles.cell)}>{item.message}</td><td {...stylex.props(styles.cell, styles.status)}><select aria-label={`Status for ${item.conversationId}`} value={item.status} onChange={(event) => setStatus(item.id, event.target.value)} {...stylex.props(styles.select)}><option value="open">Open</option><option value="acknowledged">Acknowledged</option><option value="resolved">Resolved</option></select></td></tr>)}</tbody></table>;
+  return <table {...stylex.props(styles.table)}><thead><tr>{["Intent", "Conversation", "Message", "Status"].map((heading) => <th key={heading} {...stylex.props(styles.cell)}>{heading}</th>)}</tr></thead><tbody>{items.map((item) => <tr key={item.id}><td {...stylex.props(styles.cell)}>{item.intent}</td><td {...stylex.props(styles.cell)}>{item.conversationId}</td><td {...stylex.props(styles.cell)}>{item.message}</td><td {...stylex.props(styles.cell, styles.status)}><select aria-label={`Status for ${item.conversationId}`} value={item.status} onChange={(event) => setStatus(item.id, event.target.value)} {...stylex.props(styles.select)}><option value="open">Open</option><option value="acknowledged">Acknowledged</option><option value="resolved">Resolved</option></select></td></tr>)}</tbody></table>;
 }
