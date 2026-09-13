@@ -1,25 +1,29 @@
 -- CreateTable
 CREATE TABLE "ListingRule" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "listingId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "floorPrice" INTEGER NOT NULL,
     "targetPrice" INTEGER NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ListingRule_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Escalation" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "conversationId" TEXT NOT NULL,
     "listingId" TEXT,
     "intent" TEXT NOT NULL,
     "message" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'open',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Escalation_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex

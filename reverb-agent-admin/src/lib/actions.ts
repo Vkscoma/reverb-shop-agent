@@ -29,7 +29,7 @@ export async function createListingRule(input: CreateListingRuleInput): Promise<
   if (!Number.isInteger(input.floorPrice) || !Number.isInteger(input.targetPrice)) return { ok: false, error: "Prices must be whole numbers." };
   if (input.floorPrice < 0 || input.targetPrice < input.floorPrice) return { ok: false, error: "Target price must be greater than or equal to floor price." };
   try { return { ok: true, data: await prisma.listingRule.create({ data: { ...input, listingId: input.listingId.trim(), name: input.name.trim() } }) }; }
-  catch { return { ok: false, error: "Unable to create listing rule." }; }
+  catch (error) { console.error("createListingRule failed", error); return { ok: false, error: "Unable to create listing rule." }; }
 }
 
 export async function updateListingRule(input: UpdateListingRuleInput): Promise<ActionResult<ListingRule>> {

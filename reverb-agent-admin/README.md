@@ -7,7 +7,7 @@ Next.js App Router dashboard for deterministic Reverb listing rules and human es
 ```bash
 npm install
 cp .env.example .env.local
-# Add your REVERB_API_TOKEN to .env.local
+# Add the Neon DATABASE_URL, DATABASE_URL_UNPOOLED, and REVERB_API_TOKEN values to .env.local
 npm run db:setup
 npm run dev -- --webpack
 ```

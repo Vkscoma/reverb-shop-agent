@@ -11,12 +11,14 @@ const styles = stylex.create({
   label: { color: "var(--muted)", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" },
   input: { backgroundColor: "var(--input)", border: "1px solid var(--border)", borderRadius: 6, boxShadow: "none", color: "var(--foreground)", outline: "none", padding: "10px 12px", width: "100%", ":focus": { borderColor: "#5d8de8", boxShadow: "none" } },
   button: { alignSelf: "end", backgroundColor: "#1456d9", border: 0, borderRadius: 8, color: "#fff", cursor: "pointer", fontWeight: 700, padding: "11px 16px" },
-  message: { color: "#e26d6d", fontSize: 13, gridColumn: "1 / -1", margin: 0 },
+  message: { fontSize: 13, gridColumn: "1 / -1", margin: 0 },
+  success: { color: "#42c98b" },
+  error: { color: "#e26d6d" },
 });
 
 export function RuleForm(): React.JSX.Element {
   const router = useRouter();
-  const [message, setMessage] = useState<string>("");
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [pending, setPending] = useState<boolean>(false);
 
   async function submit(formData: FormData): Promise<void> {
@@ -27,7 +29,7 @@ export function RuleForm(): React.JSX.Element {
       floorPrice: Number(formData.get("floorPrice") ?? 0),
       targetPrice: Number(formData.get("targetPrice") ?? 0),
     });
-    setMessage(result.ok ? "Rule saved." : result.error);
+    setMessage(result.ok ? { text: "Rule created.", ok: true } : { text: result.error, ok: false });
     if (result.ok) {
       router.refresh();
       (document.querySelector("form") as HTMLFormElement | null)?.reset();
@@ -42,7 +44,7 @@ export function RuleForm(): React.JSX.Element {
       <label {...stylex.props(styles.field)}><span {...stylex.props(styles.label)}>Floor price</span><input name="floorPrice" type="number" min="0" required {...stylex.props(styles.input)} /></label>
       <label {...stylex.props(styles.field)}><span {...stylex.props(styles.label)}>Target price</span><input name="targetPrice" type="number" min="0" required {...stylex.props(styles.input)} /></label>
       <button type="submit" disabled={pending} {...stylex.props(styles.button)}>{pending ? "Saving…" : "Add rule"}</button>
-      {message ? <p {...stylex.props(styles.message)}>{message}</p> : null}
+      {message ? <p {...stylex.props(styles.message, message.ok ? styles.success : styles.error)}>{message.text}</p> : null}
     </form>
   );
 }
