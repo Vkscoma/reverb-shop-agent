@@ -74,7 +74,7 @@ async function processMessages(conversations: ReverbConversation[], listings: Ma
 async function processOffers(offers: ReverbOffer[]): Promise<AutomationSummary> {
   let actionsPlanned = 0;
   let actionsSent = 0;
-  const canAct = enabled("REVERB_ENABLE_OFFER_ACTIONS") && !dryRun();
+  const canAct = enabled("REVERB_ENABLE_AUTOMATED_OFFER_ACTIONS") && !dryRun();
   for (const offer of offers) {
     if (!offer.listingId || offer.currency !== "USD" || !offer.amount) continue;
     const amountCents = Math.round(Number(offer.amount) * 100);

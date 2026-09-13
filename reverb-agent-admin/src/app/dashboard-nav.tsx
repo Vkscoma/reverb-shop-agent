@@ -11,5 +11,5 @@ const styles = stylex.create({
 });
 
 export function DashboardNav(): React.JSX.Element {
-  return <header {...stylex.props(styles.header)}><nav aria-label="Primary navigation" {...stylex.props(styles.nav)}><Link href="/" {...stylex.props(styles.brand)}>Reverb Agent Admin</Link><div {...stylex.props(styles.links)}><Link href="/listings" {...stylex.props(styles.link)}>Listings</Link><Link href="/rules" {...stylex.props(styles.link)}>Rules</Link><Link href="/escalations" {...stylex.props(styles.link)}>Escalations</Link><ThemeToggle /></div></nav></header>;
+  return <header {...stylex.props(styles.header)}><nav aria-label="Primary navigation" {...stylex.props(styles.nav)}><Link href="/" {...stylex.props(styles.brand)}>Reverb Agent Admin</Link><div {...stylex.props(styles.links)}><Link href="/listings" {...stylex.props(styles.link)}>Listings</Link><Link href="/rules" {...stylex.props(styles.link)}>Rules</Link><Link href="/offers" {...stylex.props(styles.link)}>Offers</Link><Link href="/escalations" {...stylex.props(styles.link)}>Escalations</Link><ThemeToggle /></div></nav></header>;
 }

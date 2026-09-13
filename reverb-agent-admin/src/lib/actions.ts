@@ -2,19 +2,22 @@
 
 import type { Escalation, ListingRule } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { fetchReverbListings, type ReverbListing } from "@/lib/reverb";
+import { applyOfferDecision, fetchReverbListings, type ReverbListing } from "@/lib/reverb";
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
 export type CreateListingRuleInput = { listingId: string; name: string; floorPrice: number; targetPrice: number };
 export type UpdateListingRuleInput = Partial<CreateListingRuleInput> & { id: string; isActive?: boolean };
 export type CreateEscalationInput = { conversationId: string; listingId?: string; intent: string; message: string };
 export type UpdateEscalationInput = { id: string; status: string };
+export type OfferReviewDecision = "accept" | "decline" | "counter";
+export type OfferReview = { auditId: string; offerId: string; listingId: string; amount: string; currency: string; offerStatus: string; recommendedDecision: OfferReviewDecision; recommendedCounterAmount: string | null; createdAt: string };
 
 const escalationStatuses = ["open", "acknowledged", "resolved"] as const;
 
 const nonEmpty = (value: string): boolean => value.trim().length > 0;
 const dollarsToCents = (value: number): number => Math.round(value * 100);
 const validDollarAmount = (value: number): boolean => Number.isFinite(value) && value >= 0;
+const offerDecisions = ["accept", "decline", "counter"] as const;
 
 export async function getReverbListings(): Promise<ActionResult<ReverbListing[]>> {
   try { return { ok: true, data: await fetchReverbListings() }; }
@@ -66,4 +69,42 @@ export async function updateEscalation(input: UpdateEscalationInput): Promise<Ac
   if (!escalationStatuses.includes(input.status.trim() as (typeof escalationStatuses)[number])) return { ok: false, error: "Invalid escalation status." };
   try { return { ok: true, data: await prisma.escalation.update({ where: { id: input.id }, data: { status: input.status.trim() } }) }; }
   catch { return { ok: false, error: "Unable to update escalation." }; }
+}
+
+export async function getOfferReviews(): Promise<ActionResult<OfferReview[]>> {
+  try {
+    const audits = await prisma.reverbActionAudit.findMany({ where: { action: "offer_decision", status: "planned", offerId: { not: null } }, orderBy: { createdAt: "desc" } });
+    const offerIds = audits.flatMap((audit) => audit.offerId ? [audit.offerId] : []);
+    const offers = await prisma.reverbOffer.findMany({ where: { reverbId: { in: offerIds } } });
+    const offersById = new Map(offers.map((offer) => [offer.reverbId, offer]));
+    const reviews = audits.flatMap((audit): OfferReview[] => {
+      const offer = audit.offerId ? offersById.get(audit.offerId) : undefined;
+      const decision = audit.decision;
+      if (!offer || !offer.listingId || !offer.amount || !offer.currency || !decision || !offerDecisions.includes(decision as OfferReviewDecision)) return [];
+      const counterMatch = audit.requestSummary?.match(/Counter at ([0-9]+(?:\.[0-9]{1,2})?) USD/);
+      return [{ auditId: audit.id, offerId: offer.reverbId, listingId: offer.listingId, amount: offer.amount, currency: offer.currency, offerStatus: offer.status ?? "Unknown", recommendedDecision: decision as OfferReviewDecision, recommendedCounterAmount: counterMatch?.[1] ?? null, createdAt: audit.createdAt.toISOString() }];
+    });
+    return { ok: true, data: reviews };
+  } catch { return { ok: false, error: "Unable to load offer reviews." }; }
+}
+
+export async function executeOfferReview(input: { auditId: string; decision: OfferReviewDecision; counterAmount?: string }): Promise<ActionResult<{ auditId: string }>> {
+  if (!input.auditId || !offerDecisions.includes(input.decision)) return { ok: false, error: "Invalid offer review decision." };
+  if (process.env.REVERB_DRY_RUN !== "false" || process.env.REVERB_ENABLE_OFFER_ACTIONS !== "true") return { ok: false, error: "Live offer actions are disabled. Set REVERB_DRY_RUN=false and REVERB_ENABLE_OFFER_ACTIONS=true first." };
+  const audit = await prisma.reverbActionAudit.findUnique({ where: { id: input.auditId } });
+  if (!audit || audit.action !== "offer_decision" || audit.status !== "planned" || !audit.offerId) return { ok: false, error: "This offer is no longer waiting for review." };
+  let counterAmount: string | undefined;
+  if (input.decision === "counter") {
+    const parsed = Number(input.counterAmount);
+    if (!validDollarAmount(parsed)) return { ok: false, error: "Enter a valid counter amount in USD." };
+    counterAmount = parsed.toFixed(2);
+  }
+  try {
+    await applyOfferDecision(audit.offerId, input.decision, counterAmount);
+    await prisma.reverbActionAudit.update({ where: { id: audit.id }, data: { status: "sent", decision: input.decision, requestSummary: counterAmount ? `Counter at ${counterAmount} USD` : undefined, completedAt: new Date() } });
+    return { ok: true, data: { auditId: audit.id } };
+  } catch (error) {
+    await prisma.reverbActionAudit.update({ where: { id: audit.id }, data: { status: "failed", decision: input.decision, error: error instanceof Error ? error.message : "Offer action failed", completedAt: new Date() } });
+    return { ok: false, error: "Unable to complete the Reverb offer action." };
+  }
 }
