@@ -10,7 +10,7 @@ const styles = stylex.create({
   tableWrap: { width: "100%" },
   table: { borderCollapse: "collapse", minWidth: 720, width: "100%" },
   desktopOnly: { display: "none" },
-  mobileCards: { display: "grid", gap: 16, gridTemplateColumns: "repeat(3, minmax(0, 1fr))", "@media (max-width: 900px)": { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }, "@media (max-width: 700px)": { gap: 12, gridTemplateColumns: "1fr" } },
+  mobileCards: { display: "grid", gap: 16, gridTemplateColumns: "repeat(3, minmax(0, 1fr))", "@media (max-width: 1100px)": { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }, "@media (max-width: 900px)": { gap: 12, gridTemplateColumns: "1fr" } },
   mobileCard: { backgroundColor: "var(--input)", borderColor: "var(--border)", borderRadius: 8, borderStyle: "solid", borderWidth: 1, display: "grid", gap: 10, padding: 14 },
   mobileRow: { alignItems: "baseline", display: "flex", gap: 12, justifyContent: "space-between" },
   mobileLabel: { color: "var(--muted)", fontSize: 11, fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase" },
