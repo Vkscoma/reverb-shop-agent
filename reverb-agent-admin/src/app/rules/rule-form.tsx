@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import stylex from "@stylexjs/stylex";
 import { createListingRule } from "@/lib/actions";
 
@@ -14,6 +15,7 @@ const styles = stylex.create({
 });
 
 export function RuleForm(): React.JSX.Element {
+  const router = useRouter();
   const [message, setMessage] = useState<string>("");
   const [pending, setPending] = useState<boolean>(false);
 
@@ -25,7 +27,11 @@ export function RuleForm(): React.JSX.Element {
       floorPrice: Number(formData.get("floorPrice") ?? 0),
       targetPrice: Number(formData.get("targetPrice") ?? 0),
     });
-    setMessage(result.ok ? "Rule saved. Refresh to see the latest rules." : result.error);
+    setMessage(result.ok ? "Rule saved." : result.error);
+    if (result.ok) {
+      router.refresh();
+      (document.querySelector("form") as HTMLFormElement | null)?.reset();
+    }
     setPending(false);
   }
 

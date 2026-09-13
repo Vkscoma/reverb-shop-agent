@@ -9,6 +9,8 @@ export type UpdateListingRuleInput = Partial<CreateListingRuleInput> & { id: str
 export type CreateEscalationInput = { conversationId: string; listingId?: string; intent: string; message: string };
 export type UpdateEscalationInput = { id: string; status: string };
 
+const escalationStatuses = ["open", "acknowledged", "resolved"] as const;
+
 const nonEmpty = (value: string): boolean => value.trim().length > 0;
 
 export async function getListingRules(): Promise<ActionResult<ListingRule[]>> {
@@ -18,6 +20,7 @@ export async function getListingRules(): Promise<ActionResult<ListingRule[]>> {
 
 export async function createListingRule(input: CreateListingRuleInput): Promise<ActionResult<ListingRule>> {
   if (!nonEmpty(input.listingId) || !nonEmpty(input.name)) return { ok: false, error: "Listing ID and rule name are required." };
+  if (!Number.isInteger(input.floorPrice) || !Number.isInteger(input.targetPrice)) return { ok: false, error: "Prices must be whole numbers." };
   if (input.floorPrice < 0 || input.targetPrice < input.floorPrice) return { ok: false, error: "Target price must be greater than or equal to floor price." };
   try { return { ok: true, data: await prisma.listingRule.create({ data: { ...input, listingId: input.listingId.trim(), name: input.name.trim() } }) }; }
   catch { return { ok: false, error: "Unable to create listing rule." }; }
@@ -25,8 +28,10 @@ export async function createListingRule(input: CreateListingRuleInput): Promise<
 
 export async function updateListingRule(input: UpdateListingRuleInput): Promise<ActionResult<ListingRule>> {
   if (!input.id || (input.floorPrice !== undefined && input.floorPrice < 0)) return { ok: false, error: "Invalid listing rule update." };
+  if ((input.floorPrice !== undefined && !Number.isInteger(input.floorPrice)) || (input.targetPrice !== undefined && !Number.isInteger(input.targetPrice))) return { ok: false, error: "Prices must be whole numbers." };
   if (input.floorPrice !== undefined && input.targetPrice !== undefined && input.targetPrice < input.floorPrice) return { ok: false, error: "Target price must be greater than or equal to floor price." };
-  try { return { ok: true, data: await prisma.listingRule.update({ where: { id: input.id }, data: input }) }; }
+  const { id, ...data } = input;
+  try { return { ok: true, data: await prisma.listingRule.update({ where: { id }, data: { ...data, ...(data.listingId ? { listingId: data.listingId.trim() } : {}), ...(data.name ? { name: data.name.trim() } : {}) } }) }; }
   catch { return { ok: false, error: "Unable to update listing rule." }; }
 }
 
@@ -49,6 +54,7 @@ export async function createEscalation(input: CreateEscalationInput): Promise<Ac
 
 export async function updateEscalation(input: UpdateEscalationInput): Promise<ActionResult<Escalation>> {
   if (!input.id || !nonEmpty(input.status)) return { ok: false, error: "Invalid escalation update." };
+  if (!escalationStatuses.includes(input.status.trim() as (typeof escalationStatuses)[number])) return { ok: false, error: "Invalid escalation status." };
   try { return { ok: true, data: await prisma.escalation.update({ where: { id: input.id }, data: { status: input.status.trim() } }) }; }
   catch { return { ok: false, error: "Unable to update escalation." }; }
 }

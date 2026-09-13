@@ -1,5 +1,6 @@
 import stylex from "@stylexjs/stylex";
 import { getEscalations } from "@/lib/actions";
+import { EscalationList } from "./escalation-list";
 
 export const dynamic = "force-dynamic";
 
@@ -18,5 +19,5 @@ const styles = stylex.create({
 
 export default async function EscalationsPage(): Promise<React.JSX.Element> {
   const result = await getEscalations();
-  return <main {...stylex.props(styles.main)}><span {...stylex.props(styles.eyebrow)}>Human review</span><h1 {...stylex.props(styles.title)}>Escalations</h1><p {...stylex.props(styles.intro)}>Messages and decisions routed to the store owner for review.</p><section {...stylex.props(styles.card)}>{result.ok && result.data.length > 0 ? <table {...stylex.props(styles.table)}><thead><tr>{["Intent", "Conversation", "Message", "Status"].map((heading) => <th key={heading} {...stylex.props(styles.cell, styles.head)}>{heading}</th>)}</tr></thead><tbody>{result.data.map((item) => <tr key={item.id}><td {...stylex.props(styles.cell)}>{item.intent}</td><td {...stylex.props(styles.cell)}>{item.conversationId}</td><td {...stylex.props(styles.cell)}>{item.message}</td><td {...stylex.props(styles.cell, styles.status)}>{item.status}</td></tr>)}</tbody></table> : <p {...stylex.props(styles.empty)}>{result.ok ? "No escalations require review." : result.error}</p>}</section></main>;
+  return <main {...stylex.props(styles.main)}><span {...stylex.props(styles.eyebrow)}>Human review</span><h1 {...stylex.props(styles.title)}>Escalations</h1><p {...stylex.props(styles.intro)}>Messages and decisions routed to the store owner for review.</p><section {...stylex.props(styles.card)}>{result.ok && result.data.length > 0 ? <EscalationList items={result.data} /> : <p {...stylex.props(styles.empty)}>{result.ok ? "No escalations require review." : result.error}</p>}</section></main>;
 }

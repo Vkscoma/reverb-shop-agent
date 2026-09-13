@@ -1,6 +1,7 @@
 import stylex from "@stylexjs/stylex";
 import { getListingRules } from "@/lib/actions";
 import { RuleForm } from "./rule-form";
+import { RuleList } from "./rule-list";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +21,9 @@ const styles = stylex.create({
 
 export default async function RulesPage(): Promise<React.JSX.Element> {
   const result = await getListingRules();
-  const rules = result.ok ? result.data.filter((rule) => rule.isActive) : [];
+  const rules = result.ok ? result.data : [];
   return <main {...stylex.props(styles.main)}><span {...stylex.props(styles.eyebrow)}>Rules engine</span><h1 {...stylex.props(styles.title)}>Listing rules</h1><p {...stylex.props(styles.intro)}>Deterministic offer thresholds for active Reverb listings.</p>
     <section {...stylex.props(styles.card)}><h2 {...stylex.props(styles.cardTitle)}>Add a rule</h2><RuleForm /></section>
-    <section {...stylex.props(styles.card)}><h2 {...stylex.props(styles.cardTitle)}>Active rules</h2>{result.ok && rules.length > 0 ? <table {...stylex.props(styles.table)}><thead><tr>{["Name", "Listing", "Floor", "Target", "Status"].map((heading) => <th key={heading} {...stylex.props(styles.cell, styles.head)}>{heading}</th>)}</tr></thead><tbody>{rules.map((rule) => <tr key={rule.id}><td {...stylex.props(styles.cell)}>{rule.name}</td><td {...stylex.props(styles.cell)}>{rule.listingId}</td><td {...stylex.props(styles.cell)}>${rule.floorPrice}</td><td {...stylex.props(styles.cell)}>${rule.targetPrice}</td><td {...stylex.props(styles.cell, styles.active)}>Active</td></tr>)}</tbody></table> : <p {...stylex.props(styles.empty)}>{result.ok ? "No active rules yet." : result.error}</p>}</section>
+    <section {...stylex.props(styles.card)}><h2 {...stylex.props(styles.cardTitle)}>Listing rules</h2>{result.ok && rules.length > 0 ? <RuleList rules={rules} /> : <p {...stylex.props(styles.empty)}>{result.ok ? "No listing rules yet." : result.error}</p>}</section>
   </main>;
 }
