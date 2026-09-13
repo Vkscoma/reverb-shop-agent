@@ -13,6 +13,8 @@ export type UpdateEscalationInput = { id: string; status: string };
 const escalationStatuses = ["open", "acknowledged", "resolved"] as const;
 
 const nonEmpty = (value: string): boolean => value.trim().length > 0;
+const dollarsToCents = (value: number): number => Math.round(value * 100);
+const validDollarAmount = (value: number): boolean => Number.isFinite(value) && value >= 0;
 
 export async function getReverbListings(): Promise<ActionResult<ReverbListing[]>> {
   try { return { ok: true, data: await fetchReverbListings() }; }
@@ -26,18 +28,19 @@ export async function getListingRules(): Promise<ActionResult<ListingRule[]>> {
 
 export async function createListingRule(input: CreateListingRuleInput): Promise<ActionResult<ListingRule>> {
   if (!nonEmpty(input.listingId) || !nonEmpty(input.name)) return { ok: false, error: "Listing ID and rule name are required." };
-  if (!Number.isInteger(input.floorPrice) || !Number.isInteger(input.targetPrice)) return { ok: false, error: "Prices must be whole numbers." };
-  if (input.floorPrice < 0 || input.targetPrice < input.floorPrice) return { ok: false, error: "Target price must be greater than or equal to floor price." };
-  try { return { ok: true, data: await prisma.listingRule.create({ data: { ...input, listingId: input.listingId.trim(), name: input.name.trim() } }) }; }
+  if (!validDollarAmount(input.floorPrice) || !validDollarAmount(input.targetPrice)) return { ok: false, error: "Prices must be valid USD amounts." };
+  if (input.targetPrice < input.floorPrice) return { ok: false, error: "Target price must be greater than or equal to floor price." };
+  try { return { ok: true, data: await prisma.listingRule.create({ data: { listingId: input.listingId.trim(), name: input.name.trim(), floorPrice: dollarsToCents(input.floorPrice), targetPrice: dollarsToCents(input.targetPrice) } }) }; }
   catch (error) { console.error("createListingRule failed", error); return { ok: false, error: "Unable to create listing rule." }; }
 }
 
 export async function updateListingRule(input: UpdateListingRuleInput): Promise<ActionResult<ListingRule>> {
   if (!input.id || (input.floorPrice !== undefined && input.floorPrice < 0)) return { ok: false, error: "Invalid listing rule update." };
-  if ((input.floorPrice !== undefined && !Number.isInteger(input.floorPrice)) || (input.targetPrice !== undefined && !Number.isInteger(input.targetPrice))) return { ok: false, error: "Prices must be whole numbers." };
+  if ((input.floorPrice !== undefined && !validDollarAmount(input.floorPrice)) || (input.targetPrice !== undefined && !validDollarAmount(input.targetPrice))) return { ok: false, error: "Prices must be valid USD amounts." };
   if (input.floorPrice !== undefined && input.targetPrice !== undefined && input.targetPrice < input.floorPrice) return { ok: false, error: "Target price must be greater than or equal to floor price." };
   const { id, ...data } = input;
-  try { return { ok: true, data: await prisma.listingRule.update({ where: { id }, data: { ...data, ...(data.listingId ? { listingId: data.listingId.trim() } : {}), ...(data.name ? { name: data.name.trim() } : {}) } }) }; }
+  const normalizedData = { ...data, ...(data.listingId ? { listingId: data.listingId.trim() } : {}), ...(data.name ? { name: data.name.trim() } : {}), ...(data.floorPrice !== undefined ? { floorPrice: dollarsToCents(data.floorPrice) } : {}), ...(data.targetPrice !== undefined ? { targetPrice: dollarsToCents(data.targetPrice) } : {}) };
+  try { return { ok: true, data: await prisma.listingRule.update({ where: { id }, data: normalizedData }) }; }
   catch { return { ok: false, error: "Unable to update listing rule." }; }
 }
 

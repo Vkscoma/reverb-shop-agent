@@ -41,8 +41,8 @@ export function RuleForm(): React.JSX.Element {
     <form action={submit} {...stylex.props(styles.form)}>
       <label {...stylex.props(styles.field)}><span {...stylex.props(styles.label)}>Listing ID</span><input name="listingId" required {...stylex.props(styles.input)} /></label>
       <label {...stylex.props(styles.field)}><span {...stylex.props(styles.label)}>Rule name</span><input name="name" required {...stylex.props(styles.input)} /></label>
-      <label {...stylex.props(styles.field)}><span {...stylex.props(styles.label)}>Floor price</span><input name="floorPrice" type="number" min="0" required {...stylex.props(styles.input)} /></label>
-      <label {...stylex.props(styles.field)}><span {...stylex.props(styles.label)}>Target price</span><input name="targetPrice" type="number" min="0" required {...stylex.props(styles.input)} /></label>
+      <label {...stylex.props(styles.field)}><span {...stylex.props(styles.label)}>Floor price (USD)</span><input name="floorPrice" type="number" min="0" step="0.01" required {...stylex.props(styles.input)} /></label>
+      <label {...stylex.props(styles.field)}><span {...stylex.props(styles.label)}>Target price (USD)</span><input name="targetPrice" type="number" min="0" step="0.01" required {...stylex.props(styles.input)} /></label>
       <button type="submit" disabled={pending} {...stylex.props(styles.button)}>{pending ? "Saving…" : "Add rule"}</button>
       {message ? <p {...stylex.props(styles.message, message.ok ? styles.success : styles.error)}>{message.text}</p> : null}
     </form>
