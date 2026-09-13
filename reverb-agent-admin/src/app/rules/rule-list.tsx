@@ -10,8 +10,8 @@ const styles = stylex.create({
   cell: { borderBottom: "1px solid var(--line)", color: "var(--foreground)", padding: "14px 10px", textAlign: "left" },
   active: { color: "#42c98b", fontWeight: 700 },
   inactive: { color: "var(--muted)", fontWeight: 700 },
-  action: { background: "none", border: 0, color: "#5d8de8", cursor: "pointer", fontWeight: 700, padding: 0 },
-  danger: { color: "#e26d6d", marginLeft: 12 },
+  action: { alignItems: "center", backgroundColor: "#1456d9", borderColor: "#1456d9", borderRadius: 8, borderStyle: "solid", borderWidth: 1, color: "#fff", cursor: "pointer", display: "inline-flex", fontWeight: 700, justifyContent: "center", padding: "8px 12px", transition: "all 250ms ease", ":hover": { backgroundColor: "#1f63ed", borderColor: "#1f63ed", transform: "translateY(-1px)" }, ":focus-visible": { outline: "2px solid #8db3ff", outlineOffset: 2 } },
+  danger: { backgroundColor: "#b83f4b", borderColor: "#b83f4b", marginLeft: 12, ":hover": { backgroundColor: "#d14b58", borderColor: "#d14b58" } },
 });
 
 export function RuleList({ rules }: { rules: ListingRule[] }): React.JSX.Element {

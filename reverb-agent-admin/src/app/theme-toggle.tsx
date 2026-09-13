@@ -4,7 +4,7 @@ import stylex from "@stylexjs/stylex";
 import { useTheme } from "./theme-provider";
 
 const styles = stylex.create({
-  button: { backgroundColor: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--foreground)", cursor: "pointer", fontSize: 13, fontWeight: 700, padding: "8px 12px" },
+  button: { backgroundColor: "var(--surface)", borderColor: "var(--border)", borderRadius: 8, borderStyle: "solid", borderWidth: 1, color: "var(--foreground)", cursor: "pointer", fontSize: 13, fontWeight: 700, padding: "8px 12px", transition: "all 250ms ease", ":hover": { borderColor: "#5d8de8", transform: "translateY(-1px)" }, ":focus-visible": { outline: "2px solid #8db3ff", outlineOffset: 2 } },
 });
 
 export function ThemeToggle(): React.JSX.Element {

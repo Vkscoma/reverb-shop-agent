@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { fetchReverbConversations, fetchReverbListings, fetchReverbOffers } from "@/lib/reverb";
+import { processReverbAutomation } from "@/lib/automation";
 
 export type SyncSummary = {
   syncRunId: string;
@@ -7,6 +8,9 @@ export type SyncSummary = {
   conversations: number;
   messages: number;
   offers: number;
+  actionsPlanned: number;
+  actionsSent: number;
+  escalationsCreated: number;
 };
 
 export async function syncReverbData(): Promise<SyncSummary> {
@@ -24,8 +28,8 @@ export async function syncReverbData(): Promise<SyncSummary> {
     for (const listing of listings) {
       await prisma.syncedListing.upsert({
         where: { reverbId: listing.id },
-        create: { reverbId: listing.id, make: listing.make, model: listing.model, amount: listing.amount, status: listing.status },
-        update: { make: listing.make, model: listing.model, amount: listing.amount, status: listing.status, syncedAt: new Date() },
+        create: { reverbId: listing.id, make: listing.make, model: listing.model, amount: listing.amount, status: listing.status, offersEnabled: listing.offersEnabled },
+        update: { make: listing.make, model: listing.model, amount: listing.amount, status: listing.status, offersEnabled: listing.offersEnabled, syncedAt: new Date() },
       });
     }
 
@@ -54,8 +58,9 @@ export async function syncReverbData(): Promise<SyncSummary> {
       });
     }
 
-    const summary = { syncRunId: run.id, listings: listings.length, conversations: conversations.length, messages: messageCount, offers: offers.length };
-    await prisma.syncRun.update({ where: { id: run.id }, data: { status: "succeeded", finishedAt: new Date(), listingsCount: summary.listings, conversationsCount: summary.conversations, messagesCount: summary.messages, offersCount: summary.offers } });
+    const automation = await processReverbAutomation({ listings, conversations, offers });
+    const summary = { syncRunId: run.id, listings: listings.length, conversations: conversations.length, messages: messageCount, offers: offers.length, ...automation };
+    await prisma.syncRun.update({ where: { id: run.id }, data: { status: "succeeded", finishedAt: new Date(), listingsCount: summary.listings, conversationsCount: summary.conversations, messagesCount: summary.messages, offersCount: summary.offers, actionsPlanned: summary.actionsPlanned, actionsSent: summary.actionsSent, escalationsCreated: summary.escalationsCreated } });
     return summary;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown Reverb sync error.";

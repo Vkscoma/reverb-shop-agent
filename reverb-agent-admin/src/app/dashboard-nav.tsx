@@ -3,11 +3,11 @@ import stylex from "@stylexjs/stylex";
 import { ThemeToggle } from "./theme-toggle";
 
 const styles = stylex.create({
-  header: { backgroundColor: "var(--surface)", borderBottom: "1px solid var(--border)" },
+  header: { backgroundColor: "var(--surface)", borderBottomColor: "var(--border)", borderBottomStyle: "solid", borderBottomWidth: 1 },
   nav: { alignItems: "center", display: "flex", gap: 20, justifyContent: "space-between", margin: "0 auto", maxWidth: 1120, padding: "16px 24px" },
   brand: { color: "var(--foreground)", fontSize: 15, fontWeight: 800, textDecoration: "none" },
   links: { alignItems: "center", display: "flex", gap: 16 },
-  link: { color: "var(--muted)", fontSize: 14, fontWeight: 700, textDecoration: "none" },
+  link: { color: "var(--muted)", fontSize: 14, fontWeight: 700, textDecoration: "none", transition: "all 250ms ease", ":hover": { color: "var(--foreground)" } },
 });
 
 export function DashboardNav(): React.JSX.Element {

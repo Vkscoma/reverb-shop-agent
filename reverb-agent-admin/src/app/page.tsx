@@ -6,8 +6,8 @@ const styles = stylex.create({
   title: { color: "var(--foreground)", fontSize: 42, letterSpacing: "-0.05em", margin: 0 },
   intro: { color: "var(--muted)", fontSize: 18, lineHeight: 1.6, margin: "16px 0 32px", maxWidth: 600 },
   nav: { display: "flex", gap: 12 },
-  link: { backgroundColor: "#1456d9", borderRadius: 8, color: "#fff", fontWeight: 700, padding: "12px 16px", textDecoration: "none" },
-  secondary: { backgroundColor: "var(--surface)", border: "1px solid var(--border)", color: "var(--foreground)" },
+  link: { backgroundColor: "#1456d9", borderColor: "#1456d9", borderRadius: 8, borderStyle: "solid", borderWidth: 1, color: "#fff", fontWeight: 700, padding: "12px 16px", textDecoration: "none", transition: "all 250ms ease", ":hover": { backgroundColor: "#1f63ed", borderColor: "#1f63ed", transform: "translateY(-1px)" } },
+  secondary: { backgroundColor: "var(--surface)", borderColor: "var(--border)", borderStyle: "solid", borderWidth: 1, color: "var(--foreground)", ":hover": { backgroundColor: "var(--line)", borderColor: "#5d8de8" } },
 });
 
 export default function Home(): React.JSX.Element {

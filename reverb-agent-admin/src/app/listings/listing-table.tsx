@@ -6,12 +6,12 @@ import type { ReverbListing } from "@/lib/reverb";
 
 const styles = stylex.create({
   controls: { display: "flex", justifyContent: "space-between", marginBottom: 18 },
-  input: { backgroundColor: "var(--input)", border: "1px solid var(--border)", borderRadius: 6, boxShadow: "none", color: "var(--foreground)", outline: "none", padding: "10px 12px", width: "min(100%, 420px)", ":focus": { borderColor: "#5d8de8", boxShadow: "none" } },
+  input: { appearance: "none", backgroundColor: "var(--input)", borderColor: "var(--border)", borderRadius: 6, borderStyle: "solid", borderWidth: 1, boxShadow: "none", color: "var(--foreground)", outline: "none", padding: "10px 12px", transition: "all 250ms ease", width: "min(100%, 420px)", ":focus": { borderColor: "#5d8de8", boxShadow: "none", outline: "none" }, ":focus-visible": { outline: "none" } },
   table: { borderCollapse: "collapse", width: "100%" },
   cell: { borderBottom: "1px solid var(--line)", color: "var(--foreground)", padding: "14px 10px", textAlign: "left", verticalAlign: "top" },
   heading: { color: "var(--muted)", fontSize: 12, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase" },
   id: { fontFamily: "monospace", fontSize: 13 },
-  copy: { background: "none", border: 0, color: "#5d8de8", cursor: "pointer", fontSize: 12, fontWeight: 700, marginLeft: 8, padding: 0 },
+  copy: { appearance: "none", backgroundColor: "transparent", borderStyle: "solid", borderWidth: 0, color: "#5d8de8", cursor: "pointer", fontSize: 12, fontWeight: 700, marginLeft: 8, padding: 0, transition: "all 250ms ease", ":hover": { color: "#8db3ff" }, ":focus-visible": { outline: "2px solid #8db3ff", outlineOffset: 2 } },
   empty: { color: "var(--muted)", margin: 0 },
 });
 

@@ -6,6 +6,7 @@ export type ReverbListing = {
   model: string;
   amount: string;
   status: string;
+  offersEnabled: boolean;
 };
 
 export type ReverbMessage = {
@@ -65,6 +66,7 @@ function parseListing(value: unknown): ReverbListing | null {
     model: text(value.model) || "—",
     amount: text(price.amount) || "—",
     status: text(state.description) || "Unknown",
+    offersEnabled: value.offers_enabled === true,
   };
 }
 
@@ -100,7 +102,7 @@ async function fetchReverbCollection(path: string, key: string, fresh: boolean):
       },
       next: { revalidate: 3600 },
     });
-    if (!response.ok) throw new Error(`Reverb listings request failed with status ${response.status}.`);
+    if (!response.ok) throw new Error(`Reverb ${key} request failed with status ${response.status}.`);
     const payload: unknown = await response.json();
     if (!isRecord(payload) || !Array.isArray(payload[key])) throw new Error(`Reverb ${key} response was invalid.`);
     for (const record of payload[key]) if (isRecord(record)) records.push(record);
@@ -143,14 +145,14 @@ export async function fetchReverbConversations(fresh = true): Promise<ReverbConv
   return records.map(parseConversation).filter((conversation): conversation is ReverbConversation => conversation !== null);
 }
 
-function parseOffer(value: JsonRecord): ReverbOffer | null {
+function parseOffer(value: JsonRecord, parentListingId: string | null = null): ReverbOffer | null {
   const id = text(value.id || value.uuid);
   if (!id) return null;
   const price = isRecord(value.price) ? value.price : isRecord(value.offer_price) ? value.offer_price : {};
   const state = isRecord(value.state) ? value.state : {};
   return {
     id,
-    listingId: nestedId(value.listing_id || value.listing),
+    listingId: nestedId(value.listing_id || value.listing) || parentListingId,
     amount: text(price.amount) || null,
     currency: text(price.currency) || "USD",
     status: text(state.description || value.status) || null,
@@ -158,6 +160,46 @@ function parseOffer(value: JsonRecord): ReverbOffer | null {
 }
 
 export async function fetchReverbOffers(fresh = true): Promise<ReverbOffer[]> {
-  const records = await fetchReverbCollection("my/listings/negotiations", "negotiations", fresh);
-  return records.map(parseOffer).filter((offer): offer is ReverbOffer => offer !== null);
+  const listingRecords = await fetchReverbCollection("my/listings/negotiations", "listings", fresh);
+  const offers: ReverbOffer[] = [];
+  for (const listing of listingRecords) {
+    const listingId = nestedId(listing.id);
+    const negotiations = Array.isArray(listing.negotiations) ? listing.negotiations : [];
+    if (negotiations.length > 0) {
+      for (const negotiation of negotiations) {
+        if (isRecord(negotiation)) {
+          const parsed = parseOffer(negotiation, listingId);
+          if (parsed) offers.push(parsed);
+        }
+      }
+    } else if (listing.offer_id || listing.offer_price || listing.negotiation_id) {
+      const parsed = parseOffer(listing, listingId);
+      if (parsed) offers.push(parsed);
+    }
+  }
+  return offers;
+}
+
+async function reverbWrite(path: string, body?: JsonRecord): Promise<void> {
+  const token = process.env.REVERB_API_TOKEN;
+  if (!token) throw new Error("REVERB_API_TOKEN is not configured.");
+  const baseUrl = (process.env.REVERB_API_BASE_URL || defaultBaseUrl).replace(/\/$/, "");
+  const response = await fetch(`${baseUrl}/${path.replace(/^\//, "")}`, {
+    method: "POST",
+    headers: { Accept: "application/hal+json", "Accept-Version": "3.0", Authorization: `Bearer ${token}`, "Content-Type": "application/hal+json" },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Reverb mutation failed with status ${response.status}.`);
+}
+
+export async function replyToConversation(conversationId: string, body: string): Promise<void> {
+  if (!conversationId) throw new Error("A conversation ID is required.");
+  await reverbWrite(`my/conversations/${encodeURIComponent(conversationId)}/messages`, { body });
+}
+
+export async function applyOfferDecision(offerId: string, decision: "accept" | "decline" | "counter", counterAmount?: string): Promise<void> {
+  if (!offerId) throw new Error("An offer ID is required.");
+  const payload = decision === "counter" ? { price: { amount: counterAmount || "0.00", currency: "USD" } } : undefined;
+  await reverbWrite(`my/negotiations/${encodeURIComponent(offerId)}/${decision}`, payload);
 }

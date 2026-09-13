@@ -43,6 +43,7 @@ model SyncedListing {
   model     String
   amount    String
   status    String
+  offersEnabled Boolean  @default(false)
   syncedAt  DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,9 +105,32 @@ model SyncRun {
   conversationsCount   Int       @default(0)
   messagesCount        Int       @default(0)
   offersCount          Int       @default(0)
+  actionsPlanned       Int       @default(0)
+  actionsSent          Int       @default(0)
+  escalationsCreated   Int       @default(0)
   error                String?
   createdAt            DateTime  @default(now())
 
   @@index([startedAt])
   @@index([status])
+}
+
+model ReverbActionAudit {
+  id              String   @id @default(cuid())
+  action          String
+  status          String
+  conversationId  String?
+  messageId       String?
+  offerId         String?
+  listingId       String?
+  decision        String?
+  requestSummary  String?
+  responseSummary String?
+  error           String?
+  createdAt       DateTime @default(now())
+  completedAt     DateTime?
+
+  @@index([conversationId, messageId])
+  @@index([offerId, decision])
+  @@index([createdAt])
 }

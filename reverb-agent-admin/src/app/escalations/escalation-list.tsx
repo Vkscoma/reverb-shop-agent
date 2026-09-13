@@ -9,7 +9,7 @@ const styles = stylex.create({
   table: { borderCollapse: "collapse", width: "100%" },
   cell: { borderBottom: "1px solid var(--line)", color: "var(--foreground)", padding: "14px 10px", textAlign: "left", verticalAlign: "top" },
   status: { color: "#e2a45b", fontWeight: 700 },
-  select: { backgroundColor: "var(--input)", border: "1px solid var(--border)", borderRadius: 6, boxShadow: "none", color: "var(--foreground)", outline: "none", padding: "6px 8px", ":focus": { borderColor: "#e2a45b", boxShadow: "none" } },
+  select: { appearance: "none", backgroundColor: "var(--input)", borderColor: "var(--border)", borderRadius: 6, borderStyle: "solid", borderWidth: 1, boxShadow: "none", color: "var(--foreground)", outline: "none", padding: "6px 8px", transition: "all 250ms ease", ":focus": { borderColor: "#e2a45b", boxShadow: "none", outline: "none" }, ":focus-visible": { outline: "none" } },
 });
 
 export function EscalationList({ items }: { items: Escalation[] }): React.JSX.Element {
