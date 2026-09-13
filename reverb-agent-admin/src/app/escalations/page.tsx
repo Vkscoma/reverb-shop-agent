@@ -1,5 +1,7 @@
 import stylex from "@stylexjs/stylex";
 import { getEscalations } from "@/lib/actions";
+import { getAutomationSettings } from "@/lib/actions";
+import { AutomationControls } from "../automation-controls";
 import { EscalationList } from "./escalation-list";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +16,6 @@ const styles = stylex.create({
 });
 
 export default async function EscalationsPage(): Promise<React.JSX.Element> {
-  const result = await getEscalations();
-  return <main {...stylex.props(styles.main)}><span {...stylex.props(styles.eyebrow)}>Human review</span><h1 {...stylex.props(styles.title)}>Escalations</h1><p {...stylex.props(styles.intro)}>Messages and decisions routed to the store owner for review.</p><section {...stylex.props(styles.card)}>{result.ok && result.data.length > 0 ? <EscalationList items={result.data} /> : <p {...stylex.props(styles.empty)}>{result.ok ? "No escalations require review." : result.error}</p>}</section></main>;
+  const [result, settings] = await Promise.all([getEscalations(), getAutomationSettings()]);
+  return <main {...stylex.props(styles.main)}><span {...stylex.props(styles.eyebrow)}>Human review</span><h1 {...stylex.props(styles.title)}>Escalations</h1><p {...stylex.props(styles.intro)}>Messages and decisions routed to the store owner for review.</p><AutomationControls type="message" enabled={settings.ok && settings.data.messageAutoRespond} /><section {...stylex.props(styles.card)}>{result.ok && result.data.length > 0 ? <EscalationList items={result.data} /> : <p {...stylex.props(styles.empty)}>{result.ok ? "No escalations require review." : result.error}</p>}</section></main>;
 }

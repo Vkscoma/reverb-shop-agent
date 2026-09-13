@@ -3,6 +3,7 @@
 import type { Escalation, ListingRule } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { applyOfferDecision, fetchReverbListings, type ReverbListing } from "@/lib/reverb";
+import { syncReverbData, type SyncSummary } from "@/lib/sync";
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
 export type CreateListingRuleInput = { listingId: string; name: string; floorPrice: number; targetPrice: number };
@@ -11,6 +12,7 @@ export type CreateEscalationInput = { conversationId: string; listingId?: string
 export type UpdateEscalationInput = { id: string; status: string };
 export type OfferReviewDecision = "accept" | "decline" | "counter";
 export type OfferReview = { auditId: string; offerId: string; listingId: string; amount: string; currency: string; offerStatus: string; recommendedDecision: OfferReviewDecision; recommendedCounterAmount: string | null; createdAt: string };
+export type AutomationSettings = { offerAutoRespond: boolean; messageAutoRespond: boolean };
 
 const escalationStatuses = ["open", "acknowledged", "resolved"] as const;
 
@@ -22,6 +24,25 @@ const offerDecisions = ["accept", "decline", "counter"] as const;
 export async function getReverbListings(): Promise<ActionResult<ReverbListing[]>> {
   try { return { ok: true, data: await fetchReverbListings() }; }
   catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Unable to load Reverb listings." }; }
+}
+
+export async function triggerReverbSync(): Promise<ActionResult<SyncSummary>> {
+  try { return { ok: true, data: await syncReverbData() }; }
+  catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Unable to sync Reverb data." }; }
+}
+
+export async function getAutomationSettings(): Promise<ActionResult<AutomationSettings>> {
+  try {
+    const settings = await prisma.automationSetting.findUnique({ where: { id: "default" } });
+    return { ok: true, data: { offerAutoRespond: settings?.offerAutoRespond ?? false, messageAutoRespond: settings?.messageAutoRespond ?? false } };
+  } catch { return { ok: false, error: "Unable to load automation settings." }; }
+}
+
+export async function updateAutomationSetting(input: { type: "offer" | "message"; enabled: boolean }): Promise<ActionResult<AutomationSettings>> {
+  try {
+    const settings = await prisma.automationSetting.upsert({ where: { id: "default" }, create: { id: "default", offerAutoRespond: input.type === "offer" ? input.enabled : false, messageAutoRespond: input.type === "message" ? input.enabled : false }, update: input.type === "offer" ? { offerAutoRespond: input.enabled } : { messageAutoRespond: input.enabled } });
+    return { ok: true, data: { offerAutoRespond: settings.offerAutoRespond, messageAutoRespond: settings.messageAutoRespond } };
+  } catch { return { ok: false, error: "Unable to update automation settings." }; }
 }
 
 export async function getListingRules(): Promise<ActionResult<ListingRule[]>> {

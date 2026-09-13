@@ -134,3 +134,11 @@ model ReverbActionAudit {
   @@index([offerId, decision])
   @@index([createdAt])
 }
+
+model AutomationSetting {
+  id                String   @id @default("default")
+  offerAutoRespond  Boolean  @default(false)
+  messageAutoRespond Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}

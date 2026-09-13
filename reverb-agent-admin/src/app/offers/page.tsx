@@ -1,5 +1,7 @@
 import stylex from "@stylexjs/stylex";
 import { getOfferReviews } from "@/lib/actions";
+import { getAutomationSettings } from "@/lib/actions";
+import { AutomationControls } from "../automation-controls";
 import { OfferReviewList } from "./offer-review-list";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +16,6 @@ const styles = stylex.create({
 });
 
 export default async function OffersPage(): Promise<React.JSX.Element> {
-  const result = await getOfferReviews();
-  return <main {...stylex.props(styles.main)}><span {...stylex.props(styles.eyebrow)}>Offer review</span><h1 {...stylex.props(styles.title)}>Offers</h1><p {...stylex.props(styles.intro)}>Review the recommended decision before sending an accept, decline, or counter response to Reverb.</p><section {...stylex.props(styles.card)}>{result.ok && result.data.length > 0 ? <OfferReviewList reviews={result.data} /> : <p {...stylex.props(styles.empty)}>{result.ok ? "No offers are waiting for review." : result.error}</p>}</section></main>;
+  const [result, settings] = await Promise.all([getOfferReviews(), getAutomationSettings()]);
+  return <main {...stylex.props(styles.main)}><span {...stylex.props(styles.eyebrow)}>Offer review</span><h1 {...stylex.props(styles.title)}>Offers</h1><p {...stylex.props(styles.intro)}>Review the recommended decision before sending an accept, decline, or counter response to Reverb.</p><AutomationControls type="offer" enabled={settings.ok && settings.data.offerAutoRespond} /><section {...stylex.props(styles.card)}>{result.ok && result.data.length > 0 ? <OfferReviewList reviews={result.data} /> : <p {...stylex.props(styles.empty)}>{result.ok ? "No offers are waiting for review." : result.error}</p>}</section></main>;
 }

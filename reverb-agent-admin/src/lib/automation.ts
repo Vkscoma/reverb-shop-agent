@@ -21,10 +21,6 @@ function dryRun(): boolean {
   return process.env.REVERB_DRY_RUN !== "false";
 }
 
-function enabled(name: string): boolean {
-  return process.env[name] === "true";
-}
-
 async function createEscalation(conversation: ReverbConversation, body: string, intent: MessageIntent, reason: string): Promise<boolean> {
   const existing = await prisma.escalation.findFirst({ where: { conversationId: conversation.id, message: body } });
   if (existing) return false;
@@ -32,12 +28,12 @@ async function createEscalation(conversation: ReverbConversation, body: string, 
   return true;
 }
 
-async function processMessages(conversations: ReverbConversation[], listings: Map<string, ReverbListing>, offers: ReverbOffer[]): Promise<AutomationSummary> {
+async function processMessages(conversations: ReverbConversation[], listings: Map<string, ReverbListing>, offers: ReverbOffer[], messageAutoRespond: boolean): Promise<AutomationSummary> {
   let actionsPlanned = 0;
   let actionsSent = 0;
   let escalationsCreated = 0;
   const ownerId = process.env.REVERB_OWNER_ID;
-  const canReply = enabled("REVERB_ENABLE_MESSAGE_REPLIES") && !dryRun();
+  const canReply = messageAutoRespond && !dryRun();
 
   for (const conversation of conversations) {
     const message = conversation.messages[conversation.messages.length - 1];
@@ -71,10 +67,10 @@ async function processMessages(conversations: ReverbConversation[], listings: Ma
   return { actionsPlanned, actionsSent, escalationsCreated };
 }
 
-async function processOffers(offers: ReverbOffer[]): Promise<AutomationSummary> {
+async function processOffers(offers: ReverbOffer[], offerAutoRespond: boolean): Promise<AutomationSummary> {
   let actionsPlanned = 0;
   let actionsSent = 0;
-  const canAct = enabled("REVERB_ENABLE_AUTOMATED_OFFER_ACTIONS") && !dryRun();
+  const canAct = offerAutoRespond && !dryRun();
   for (const offer of offers) {
     if (!offer.listingId || offer.currency !== "USD" || !offer.amount) continue;
     const amountCents = Math.round(Number(offer.amount) * 100);
@@ -103,7 +99,8 @@ async function processOffers(offers: ReverbOffer[]): Promise<AutomationSummary> 
 
 export async function processReverbAutomation(input: { listings: ReverbListing[]; conversations: ReverbConversation[]; offers: ReverbOffer[] }): Promise<AutomationSummary> {
   const listings = new Map(input.listings.map((listing) => [listing.id, listing]));
-  const messages = await processMessages(input.conversations, listings, input.offers);
-  const offers = await processOffers(input.offers);
+  const settings = await prisma.automationSetting.findUnique({ where: { id: "default" } });
+  const messages = await processMessages(input.conversations, listings, input.offers, settings?.messageAutoRespond ?? false);
+  const offers = await processOffers(input.offers, settings?.offerAutoRespond ?? false);
   return { actionsPlanned: messages.actionsPlanned + offers.actionsPlanned, actionsSent: messages.actionsSent + offers.actionsSent, escalationsCreated: messages.escalationsCreated };
 }
