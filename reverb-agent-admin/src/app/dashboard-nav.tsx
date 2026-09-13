@@ -4,9 +4,9 @@ import { ThemeToggle } from "./theme-toggle";
 
 const styles = stylex.create({
   header: { backgroundColor: "var(--surface)", borderBottomColor: "var(--border)", borderBottomStyle: "solid", borderBottomWidth: 1 },
-  nav: { alignItems: "center", display: "flex", gap: 20, justifyContent: "space-between", margin: "0 auto", maxWidth: 1120, padding: "16px 24px" },
+  nav: { alignItems: "center", display: "flex", gap: 20, justifyContent: "space-between", margin: "0 auto", maxWidth: 1120, padding: "16px 24px", "@media (max-width: 700px)": { alignItems: "flex-start", flexDirection: "column", gap: 14, padding: "14px 16px" } },
   brand: { color: "var(--foreground)", fontSize: 15, fontWeight: 800, textDecoration: "none" },
-  links: { alignItems: "center", display: "flex", gap: 16 },
+  links: { alignItems: "center", display: "flex", flexWrap: "wrap", gap: 16, "@media (max-width: 700px)": { alignItems: "flex-start", gap: 12, width: "100%" } },
   link: { color: "var(--muted)", fontSize: 14, fontWeight: 700, textDecoration: "none", transition: "all 250ms ease", ":hover": { color: "var(--foreground)" } },
 });
 
