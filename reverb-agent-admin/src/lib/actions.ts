@@ -11,7 +11,7 @@ export type UpdateListingRuleInput = Partial<CreateListingRuleInput> & { id: str
 export type CreateEscalationInput = { conversationId: string; listingId?: string; intent: string; message: string };
 export type UpdateEscalationInput = { id: string; status: string };
 export type OfferReviewDecision = "accept" | "decline" | "counter";
-export type OfferReview = { auditId: string; offerId: string; listingId: string; amount: string; currency: string; offerStatus: string; recommendedDecision: OfferReviewDecision; recommendedCounterAmount: string | null; createdAt: string };
+export type OfferReview = { auditId: string | null; offerId: string; listingId: string; amount: string; currency: string; offerStatus: string; recommendedDecision: OfferReviewDecision | null; recommendedCounterAmount: string | null; createdAt: string };
 export type AutomationSettings = { offerAutoRespond: boolean; messageAutoRespond: boolean };
 
 const escalationStatuses = ["open", "acknowledged", "resolved"] as const;
@@ -94,16 +94,18 @@ export async function updateEscalation(input: UpdateEscalationInput): Promise<Ac
 
 export async function getOfferReviews(): Promise<ActionResult<OfferReview[]>> {
   try {
-    const audits = await prisma.reverbActionAudit.findMany({ where: { action: "offer_decision", status: "planned", offerId: { not: null } }, orderBy: { createdAt: "desc" } });
-    const offerIds = audits.flatMap((audit) => audit.offerId ? [audit.offerId] : []);
-    const offers = await prisma.reverbOffer.findMany({ where: { reverbId: { in: offerIds } } });
-    const offersById = new Map(offers.map((offer) => [offer.reverbId, offer]));
-    const reviews = audits.flatMap((audit): OfferReview[] => {
-      const offer = audit.offerId ? offersById.get(audit.offerId) : undefined;
-      const decision = audit.decision;
-      if (!offer || !offer.listingId || !offer.amount || !offer.currency || !decision || !offerDecisions.includes(decision as OfferReviewDecision)) return [];
-      const counterMatch = audit.requestSummary?.match(/Counter at ([0-9]+(?:\.[0-9]{1,2})?) USD/);
-      return [{ auditId: audit.id, offerId: offer.reverbId, listingId: offer.listingId, amount: offer.amount, currency: offer.currency, offerStatus: offer.status ?? "Unknown", recommendedDecision: decision as OfferReviewDecision, recommendedCounterAmount: counterMatch?.[1] ?? null, createdAt: audit.createdAt.toISOString() }];
+    const [offers, audits] = await Promise.all([
+      prisma.reverbOffer.findMany({ where: { listingId: { not: null }, amount: { not: null } }, orderBy: { createdAt: "desc" } }),
+      prisma.reverbActionAudit.findMany({ where: { action: "offer_decision", status: "planned", offerId: { not: null } }, orderBy: { createdAt: "desc" } }),
+    ]);
+    const auditsByOfferId = new Map(audits.flatMap((audit) => audit.offerId ? [[audit.offerId, audit] as const] : []));
+    const reviews = offers.flatMap((offer): OfferReview[] => {
+      if (!offer.listingId || !offer.amount || !offer.currency) return [];
+      const audit = auditsByOfferId.get(offer.reverbId);
+      const decision = audit?.decision;
+      const recommendedDecision = decision && offerDecisions.includes(decision as OfferReviewDecision) ? decision as OfferReviewDecision : null;
+      const counterMatch = audit?.requestSummary?.match(/Counter at ([0-9]+(?:\.[0-9]{1,2})?) USD/);
+      return [{ auditId: audit?.id ?? null, offerId: offer.reverbId, listingId: offer.listingId, amount: offer.amount, currency: offer.currency, offerStatus: offer.status ?? "Unknown", recommendedDecision, recommendedCounterAmount: counterMatch?.[1] ?? null, createdAt: offer.createdAt.toISOString() }];
     });
     return { ok: true, data: reviews };
   } catch { return { ok: false, error: "Unable to load offer reviews." }; }

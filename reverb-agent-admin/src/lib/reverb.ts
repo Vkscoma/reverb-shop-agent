@@ -54,6 +54,16 @@ function nestedId(value: unknown): string | null {
   return text(value) || null;
 }
 
+function nestedText(value: unknown, ...keys: string[]): string | null {
+  if (isRecord(value)) {
+    for (const key of keys) {
+      const result = text(value[key]);
+      if (result) return result;
+    }
+  }
+  return text(value) || null;
+}
+
 function parseListing(value: unknown): ReverbListing | null {
   if (!isRecord(value)) return null;
   const id = text(value.id || value.uuid);
@@ -146,16 +156,21 @@ export async function fetchReverbConversations(fresh = true): Promise<ReverbConv
 }
 
 function parseOffer(value: JsonRecord, parentListingId: string | null = null): ReverbOffer | null {
-  const id = text(value.id || value.uuid);
+  // Reverb has returned both `id`/`uuid` and `offer_id`/`negotiation_id`
+  // for otherwise equivalent negotiation records. Prefer the explicit offer
+  // identifiers so a listing wrapper is never mistaken for the offer.
+  const id = text(value.offer_id || value.negotiation_id || value.id || value.uuid);
   if (!id) return null;
   const price = isRecord(value.price) ? value.price : isRecord(value.offer_price) ? value.offer_price : {};
   const state = isRecord(value.state) ? value.state : {};
+  const amount = nestedText(price, "amount") || nestedText(value.offer_price, "amount") || text(value.offer_amount || value.amount);
+  const currency = nestedText(price, "currency") || nestedText(value.offer_price, "currency") || text(value.offer_currency || value.currency) || "USD";
   return {
     id,
     listingId: nestedId(value.listing_id || value.listing) || parentListingId,
-    amount: text(price.amount) || null,
-    currency: text(price.currency) || "USD",
-    status: text(state.description || value.status) || null,
+    amount: amount || null,
+    currency,
+    status: text(state.description || state.name || value.status) || null,
   };
 }
 
@@ -172,7 +187,7 @@ export async function fetchReverbOffers(fresh = true): Promise<ReverbOffer[]> {
           if (parsed) offers.push(parsed);
         }
       }
-    } else if (listing.offer_id || listing.offer_price || listing.negotiation_id) {
+    } else if (listing.offer_id || listing.offer_price || listing.negotiation_id || listing.offer_amount) {
       const parsed = parseOffer(listing, listingId);
       if (parsed) offers.push(parsed);
     }
