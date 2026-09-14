@@ -161,16 +161,17 @@ function parseOffer(value: JsonRecord, parentListingId: string | null = null): R
   // identifiers so a listing wrapper is never mistaken for the offer.
   const id = text(value.offer_id || value.negotiation_id || value.id || value.uuid);
   if (!id) return null;
-  const price = isRecord(value.price) ? value.price : isRecord(value.offer_price) ? value.offer_price : {};
+  const price = isRecord(value.price) ? value.price : isRecord(value.offer_price) ? value.offer_price : isRecord(value.last_offered_price) ? value.last_offered_price : {};
+  const originalPrice = isRecord(price.original) ? price.original : isRecord(price.display) ? price.display : price;
   const state = isRecord(value.state) ? value.state : {};
-  const amount = nestedText(price, "amount") || nestedText(value.offer_price, "amount") || text(value.offer_amount || value.amount);
-  const currency = nestedText(price, "currency") || nestedText(value.offer_price, "currency") || text(value.offer_currency || value.currency) || "USD";
+  const amount = nestedText(originalPrice, "amount") || nestedText(price, "amount") || nestedText(value.offer_price, "amount") || text(value.offer_amount || value.amount);
+  const currency = nestedText(originalPrice, "currency") || nestedText(price, "currency") || nestedText(value.offer_price, "currency") || text(value.offer_currency || value.currency) || "USD";
   return {
     id,
     listingId: nestedId(value.listing_id || value.listing) || parentListingId,
     amount: amount || null,
     currency,
-    status: text(state.description || state.name || value.status) || null,
+    status: text(isRecord(state) ? state.description || state.name : state) || text(value.status) || null,
   };
 }
 
