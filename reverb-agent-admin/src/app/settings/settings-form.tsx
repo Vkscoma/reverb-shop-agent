@@ -21,7 +21,7 @@ const styles = stylex.create({
   safe: { backgroundColor: "#dff4e4", color: "#176b2c" },
   warning: { backgroundColor: "#ffead2", color: "#8a4b08" },
   muted: { color: "var(--muted)", fontSize: 13 },
-  sync: { backgroundColor: "#1456d9", border: "1px solid #1456d9", borderRadius: 8, color: "#fff", cursor: "pointer", fontWeight: 700, padding: "9px 13px" },
+  sync: { alignItems: "center", appearance: "none", backgroundColor: "#1456d9", borderColor: "#1456d9", borderRadius: 8, borderStyle: "solid", borderWidth: 1, color: "#fff", cursor: "pointer", display: "inline-flex", fontWeight: 700, justifyContent: "center", padding: "8px 12px", transition: "all 250ms ease", ":hover": { backgroundColor: "#1f63ed", borderColor: "#1f63ed", transform: "translateY(-1px)" }, ":focus-visible": { outline: "2px solid #8db3ff", outlineOffset: 2 } },
   stats: { display: "grid", gap: 12, gridTemplateColumns: "repeat(4, minmax(0, 1fr))", marginTop: 18, "@media (max-width: 600px)": { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } },
   stat: { backgroundColor: "var(--input)", border: "1px solid var(--line)", borderRadius: 8, padding: 12 },
   statValue: { color: "var(--foreground)", display: "block", fontSize: 20, fontWeight: 800 },
