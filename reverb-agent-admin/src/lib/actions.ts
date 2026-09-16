@@ -13,6 +13,10 @@ export type UpdateEscalationInput = { id: string; status: string };
 export type OfferReviewDecision = "accept" | "decline" | "counter";
 export type OfferReview = { auditId: string | null; offerId: string; listingId: string; amount: string; currency: string; offerStatus: string; recommendedDecision: OfferReviewDecision | null; recommendedCounterAmount: string | null; createdAt: string };
 export type AutomationSettings = { offerAutoRespond: boolean; messageAutoRespond: boolean };
+export type SettingsEnvironment = { dryRun: boolean; offerActionsEnabled: boolean; liveMutationsPossible: boolean };
+export type SyncStatus = { status: string; startedAt: string; finishedAt: string | null; listingsCount: number; conversationsCount: number; messagesCount: number; offersCount: number; actionsPlanned: number; actionsSent: number; error: string | null } | null;
+export type AutomationActivity = { id: string; action: string; status: string; createdAt: string; completedAt: string | null; conversationId: string | null; messageId: string | null; offerId: string | null; listingId: string | null; decision: string | null; requestSummary: string | null; error: string | null };
+export type SettingsDashboardData = { settings: AutomationSettings; environment: SettingsEnvironment; latestSync: SyncStatus; activity: AutomationActivity[] };
 
 const escalationStatuses = ["open", "acknowledged", "resolved"] as const;
 
@@ -22,7 +26,7 @@ const validDollarAmount = (value: number): boolean => Number.isFinite(value) && 
 const offerDecisions = ["accept", "decline", "counter"] as const;
 
 export async function getReverbListings(): Promise<ActionResult<ReverbListing[]>> {
-  try { return { ok: true, data: await fetchReverbListings() }; }
+  try { return { ok: true, data: await fetchReverbListings(true) }; }
   catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Unable to load Reverb listings." }; }
 }
 
@@ -43,6 +47,25 @@ export async function updateAutomationSetting(input: { type: "offer" | "message"
     const settings = await prisma.automationSetting.upsert({ where: { id: "default" }, create: { id: "default", offerAutoRespond: input.type === "offer" ? input.enabled : false, messageAutoRespond: input.type === "message" ? input.enabled : false }, update: input.type === "offer" ? { offerAutoRespond: input.enabled } : { messageAutoRespond: input.enabled } });
     return { ok: true, data: { offerAutoRespond: settings.offerAutoRespond, messageAutoRespond: settings.messageAutoRespond } };
   } catch { return { ok: false, error: "Unable to update automation settings." }; }
+}
+
+export async function getSettingsDashboardData(): Promise<ActionResult<SettingsDashboardData>> {
+  try {
+    const [settings, latestSync, activity] = await Promise.all([
+      prisma.automationSetting.findUnique({ where: { id: "default" } }),
+      prisma.syncRun.findFirst({ orderBy: { startedAt: "desc" } }),
+      prisma.reverbActionAudit.findMany({ orderBy: { createdAt: "desc" }, take: 20 }),
+    ]);
+    return {
+      ok: true,
+      data: {
+        settings: { offerAutoRespond: settings?.offerAutoRespond ?? false, messageAutoRespond: settings?.messageAutoRespond ?? false },
+        environment: { dryRun: process.env.REVERB_DRY_RUN !== "false", offerActionsEnabled: process.env.REVERB_ENABLE_OFFER_ACTIONS === "true", liveMutationsPossible: process.env.REVERB_DRY_RUN === "false" && (process.env.REVERB_ENABLE_OFFER_ACTIONS === "true" || (settings?.messageAutoRespond ?? false)) },
+        latestSync: latestSync ? { status: latestSync.status, startedAt: latestSync.startedAt.toISOString(), finishedAt: latestSync.finishedAt?.toISOString() ?? null, listingsCount: latestSync.listingsCount, conversationsCount: latestSync.conversationsCount, messagesCount: latestSync.messagesCount, offersCount: latestSync.offersCount, actionsPlanned: latestSync.actionsPlanned, actionsSent: latestSync.actionsSent, error: latestSync.error } : null,
+        activity: activity.map((item) => ({ id: item.id, action: item.action, status: item.status, createdAt: item.createdAt.toISOString(), completedAt: item.completedAt?.toISOString() ?? null, conversationId: item.conversationId, messageId: item.messageId, offerId: item.offerId, listingId: item.listingId, decision: item.decision, requestSummary: item.requestSummary, error: item.error })),
+      },
+    };
+  } catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Unable to load settings activity." }; }
 }
 
 export async function getListingRules(): Promise<ActionResult<ListingRule[]>> {
